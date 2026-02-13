@@ -5,7 +5,19 @@ function SearchBar() {
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
-    <div className="relative">
+    <div className="flex items-center gap-2">
+      {/* Input de recherche (apparaît au clic) */}
+      {isOpen && (
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Rechercher un film..."
+          className="w-64 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-primary text-white"
+          autoFocus
+        />
+      )}
+
       {/* Bouton de recherche */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -20,20 +32,6 @@ function SearchBar() {
           />
         </svg>
       </button>
-
-      {/* Input de recherche (apparaît au clic) */}
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher un film..."
-            className="w-64 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-primary text-white"
-            autoFocus
-          />
-        </div>
-      )}
     </div>
   );
 }
