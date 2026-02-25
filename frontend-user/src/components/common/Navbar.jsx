@@ -48,7 +48,7 @@ ${isScrolled ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"}`}
           <div className="flex items-center space-x-8">
             <Link to="/">
               <h1 className="text-primary text-3xl font-bold tracking-tight hover:opacity-80 transition-opacity">
-                NETFLIX
+                NETFÉLIX
               </h1>
             </Link>
 
