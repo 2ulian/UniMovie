@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function SearchBar({ movies, onSearch }) {
+function SearchBar({ movies = [], onSearch }) {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (searchTerm.length >= 2) {
+    if (searchTerm.length >= 2 && movies.length > 0) {
       // Filtrer les films en fonction du titre et la description
       const filtered = movies
         .filter(movie =>
@@ -24,11 +26,21 @@ function SearchBar({ movies, onSearch }) {
   }, [searchTerm, movies]);
 
   const handleSelect = (movie) => {
-    setSearchTerm(movie.title);
+    setSearchTerm('');
     setIsOpen(false);
-    // Action lors de la sélection
+    // Naviguer vers la page du film
+    navigate(`/movie/${movie.id}`);
+    // Callback optionnel
     if (onSearch) {
       onSearch(movie);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.length >= 2) {
+      setIsOpen(false);
+      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 
@@ -39,19 +51,25 @@ function SearchBar({ movies, onSearch }) {
     }
   };
 
+  const handleBlur = () => {
+    // Fermer les suggestions après un délai (pour permettre le clic)
+    setTimeout(() => setIsOpen(false), 200);
+  };
+
   return (
-    <div className="relative w-full max-w-md">
+    <form onSubmit={handleSubmit} className="relative w-full max-w-md">
       <div className="relative">
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder="Rechercher un film..."
           className="w-full px-4 py-2 pl-10 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-primary text-white"
         />
         <svg
-          className="absolute left-3 top-3 w-5 h-5 text-gray-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -87,9 +105,17 @@ function SearchBar({ movies, onSearch }) {
               </div>
             </div>
           ))}
+
+          {/* Lien vers la recherche complète */}
+          <button
+            type="submit"
+            className="w-full p-3 text-center text-primary hover:bg-gray-800 transition-colors border-t border-gray-700"
+          >
+            Voir tous les résultats pour "{searchTerm}"
+          </button>
         </div>
       )}
-    </div>
+    </form>
   );
 }
 
