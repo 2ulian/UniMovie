@@ -5,7 +5,9 @@ function MovieDescription({ description }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Fonction pour basculer l'état
-  const toggleExpanded = () => {
+  const toggleExpanded = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setIsExpanded(!isExpanded);
   };
 
