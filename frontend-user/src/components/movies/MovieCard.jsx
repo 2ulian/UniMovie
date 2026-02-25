@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Button from '../common/Button';
+import MovieDescription from './MovieDescription';
 import { useCart } from '../../context/CartContext';
 
 // Couleurs par genre
@@ -76,9 +77,9 @@ function MovieCard({ movie }) {
           {isLiked ? '❤' : '🤍'} {likes} likes
         </button>
 
-        <p className="text-sm text-gray-300 mb-4 line-clamp-2">
-          {movie.description}
-        </p>
+        <div className="text-sm text-gray-300 mb-4">
+          <MovieDescription description={movie.description} />
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
           <Button size="sm" className="flex-1" onClick={() => addToCart(movie)}>
