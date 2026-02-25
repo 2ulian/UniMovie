@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import Button from '../common/Button';
+import { useCart } from '../../context/CartContext';
 
 // Couleurs par genre
 const genreColors = {
@@ -12,6 +14,24 @@ const genreColors = {
 
 function MovieCard({ movie }) {
   const genreColor = genreColors[movie.genre] || 'bg-gray-500';
+  const { addToCart } = useCart();
+
+  // Variables d'état pour le système de likes
+  const [likes, setLikes] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+
+  // Fonction pour liker/unliker le film
+  const handleLike = () => {
+    if (isLiked) {
+      // Si déjà liké, on retire le like
+      setLikes(likes - 1);
+      setIsLiked(false);
+    } else {
+      // Sinon on ajoute un like
+      setLikes(likes + 1);
+      setIsLiked(true);
+    }
+  };
 
   return (
     <div className="group relative overflow-hidden rounded-lg cursor-pointer transition-transform duration-300 hover:scale-105">
@@ -46,13 +66,23 @@ function MovieCard({ movie }) {
           <span className="text-gray-400">{movie.duration}min</span>
         </div>
 
+        {/* Bouton Like */}
+        <button
+          onClick={handleLike}
+          className={`px-4 py-2 rounded mb-3 transition-colors ${
+            isLiked ? 'bg-red-500 text-white' : 'bg-gray-500 text-white hover:bg-gray-400'
+          }`}
+        >
+          {isLiked ? '❤' : '🤍'} {likes} likes
+        </button>
+
         <p className="text-sm text-gray-300 mb-4 line-clamp-2">
           {movie.description}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button size="sm" className="flex-1">
-            Louer {movie.price}
+          <Button size="sm" className="flex-1" onClick={() => addToCart(movie)}>
+            Louer {movie.price}€
           </Button>
           <Button variant="outline" size="sm" className="flex-1">
             + Info
