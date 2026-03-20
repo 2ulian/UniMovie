@@ -54,13 +54,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// TODO: Importer et utiliser les routes - Prochaine séance
-// import movieRoutes from './routes/movie.routes.js';
-// import authRoutes from './routes/auth.routes.js';
-// import rentalRoutes from './routes/rental.routes.js';
-// app.use('/api/movies', movieRoutes);
-// app.use('/api/auth', authRoutes);
-// app.use('/api/rentals', rentalRoutes);
+// Routes API
+import movieRoutes from './routes/movie.routes.js';
+import rentalRoutes from './routes/rental.routes.js';
+// import authRoutes from './routes/auth.routes.js'; // Séance 9
+
+app.use('/api/movies', movieRoutes);
+app.use('/api/rentals', rentalRoutes);
+// app.use('/api/auth', authRoutes); // Séance 9
 
 // Gestion des erreurs 404
 app.use((req, res) => {
