@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/layout/Footer';
+import { useAuth } from '../context/AuthProvider';
 
 function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,30 +15,27 @@ function Register() {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const validateForm = () => {
     const newErrors = {};
 
-    // Valider le nom
     if (!formData.name) {
       newErrors.name = 'Nom requis';
     }
 
-    // Valider l'email
     if (!formData.email) {
       newErrors.email = 'Email requis';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email invalide';
     }
 
-    // Valider le mot de passe
     if (!formData.password) {
       newErrors.password = 'Mot de passe requis';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Au moins 6 caractères';
     }
 
-    // Vérifier que les mots de passe correspondent
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
     }
@@ -46,16 +45,9 @@ function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    // Effacer l'erreur du champ modifié
+    setFormData({ ...formData, [name]: value });
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
+      setErrors({ ...errors, [name]: '' });
     }
   };
 
@@ -70,16 +62,14 @@ function Register() {
 
     setLoading(true);
 
-    // Simulation d'inscription
-    setTimeout(() => {
-      localStorage.setItem('user', JSON.stringify({
-        name: formData.name,
-        email: formData.email
-      }));
+    const result = await register(formData.name, formData.email, formData.password);
 
-      setLoading(false);
+    if (result.success) {
       navigate('/');
-    }, 1000);
+    } else {
+      setApiError(result.error || "Erreur lors de l'inscription");
+      setLoading(false);
+    }
   };
 
   return (
@@ -89,6 +79,10 @@ function Register() {
       <div className="flex items-center justify-center min-h-screen pt-16">
         <div className="w-full max-w-md p-8 bg-gray-900/80 backdrop-blur-sm rounded-lg">
           <h1 className="text-3xl font-bold mb-8 text-center">Inscription</h1>
+
+          {apiError && (
+            <p className="text-red-500 text-sm mb-4 text-center">{apiError}</p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Nom */}

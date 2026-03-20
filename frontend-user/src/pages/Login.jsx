@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/layout/Footer';
+import { useAuth } from '../context/AuthProvider';
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const validateForm = () => {
     const newErrors = {};
@@ -30,16 +33,9 @@ function Login() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-    // Effacer l'erreur du champ modifié
+    setFormData({ ...formData, [name]: value });
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
+      setErrors({ ...errors, [name]: '' });
     }
   };
 
@@ -54,17 +50,14 @@ function Login() {
 
     setLoading(true);
 
-    // Simulation de connexion
-    setTimeout(() => {
-      // Sauvegarde locale de l'utilisateur
-      localStorage.setItem('user', JSON.stringify({
-        email: formData.email,
-        name: formData.email.split('@')[0]
-      }));
+    const result = await login(formData.email, formData.password);
 
-      setLoading(false);
+    if (result.success) {
       navigate('/');
-    }, 1000);
+    } else {
+      setApiError(result.error || 'Erreur de connexion');
+      setLoading(false);
+    }
   };
 
   return (
@@ -74,6 +67,10 @@ function Login() {
       <div className="flex items-center justify-center min-h-screen pt-16">
         <div className="w-full max-w-md p-8 bg-gray-900/80 backdrop-blur-sm rounded-lg">
           <h1 className="text-3xl font-bold mb-8 text-center">Connexion</h1>
+
+          {apiError && (
+            <p className="text-red-500 text-sm mb-4 text-center">{apiError}</p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}

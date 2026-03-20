@@ -4,80 +4,64 @@ import Navbar from '../components/common/Navbar';
 import Footer from '../components/layout/Footer';
 import Breadcrumb from '../components/common/Breadcrumb';
 import Button from '../components/common/Button';
+import { useAuth } from '../context/AuthProvider';
+import { useCart } from '../context/CartContext';
 import moviesData from '../data/movies.json';
 
 function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { addToCart, rentMovie, isInCart, isRented } = useCart();
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
-    // Simuler un chargement
     setLoading(true);
-
     const foundMovie = moviesData.find(m => m.id === parseInt(id));
-
     setTimeout(() => {
       setMovie(foundMovie);
       setLoading(false);
     }, 500);
   }, [id]);
 
-  // Effacer la notification après 3 secondes
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 3000);
+      const timer = setTimeout(() => setNotification(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [notification]);
 
+  const handleAddToCart = () => {
+    if (isInCart(movie.id)) {
+      setNotification({ type: 'info', message: 'Film déjà dans le panier' });
+      return;
+    }
+    addToCart(movie);
+    setNotification({ type: 'success', message: 'Film ajouté au panier !' });
+  };
+
   const handleRent = () => {
-    // Vérifier si l'utilisateur est connecté
-    const user = localStorage.getItem('user');
-    if (!user) {
+    if (!isAuthenticated()) {
       navigate('/login');
       return;
     }
 
-    // Créer la location
-    const rental = {
-      ...movie,
-      rentalDate: new Date().toISOString(),
-      expiryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 jours
-    };
-
-    // Récupérer les locations existantes
-    const existingRentals = JSON.parse(localStorage.getItem('rentals') || '[]');
-
-    // Vérifier si déjà loué
-    const alreadyRented = existingRentals.some(r => r.id === movie.id);
-
-    if (alreadyRented) {
+    if (isRented(movie.id)) {
       setNotification({ type: 'error', message: 'Vous avez déjà loué ce film' });
       return;
     }
 
-    // Ajouter la nouvelle location
-    const updatedRentals = [...existingRentals, rental];
-    localStorage.setItem('rentals', JSON.stringify(updatedRentals));
-
-    setNotification({ type: 'success', message: 'Film loué avec succès !' });
-
-    // Rediriger vers MyRentals après 2 secondes
-    setTimeout(() => {
-      navigate('/my-rentals');
-    }, 2000);
+    const result = rentMovie(movie);
+    if (result.success) {
+      setNotification({ type: 'success', message: 'Film loué avec succès !' });
+      setTimeout(() => navigate('/my-rentals'), 2000);
+    }
   };
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
+  const handleGoBack = () => navigate(-1);
 
-  // Affichage pendant le chargement
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -89,7 +73,6 @@ function MovieDetail() {
     );
   }
 
-  // Film non trouvé
   if (!movie) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -102,6 +85,9 @@ function MovieDetail() {
     );
   }
 
+  const alreadyRented = isRented(movie.id);
+  const inCart = isInCart(movie.id);
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar movies={moviesData} />
@@ -110,7 +96,8 @@ function MovieDetail() {
       {notification && (
         <div
           className={`fixed top-20 right-4 px-6 py-3 rounded-lg shadow-xl z-50 ${
-            notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            notification.type === 'success' ? 'bg-green-500' :
+            notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
           }`}
         >
           {notification.message}
@@ -126,7 +113,6 @@ function MovieDetail() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent" />
 
-        {/* Bouton retour */}
         <button
           onClick={handleGoBack}
           className="absolute top-24 left-4 z-10 flex items-center gap-2 px-4 py-2 bg-black/50 hover:bg-black/70 rounded-lg transition-colors"
@@ -140,7 +126,6 @@ function MovieDetail() {
 
       {/* Contenu */}
       <div className="container mx-auto px-4 -mt-64 relative z-10">
-        {/* Breadcrumb */}
         <Breadcrumb
           items={[
             { label: 'Films', path: '/' },
@@ -164,23 +149,34 @@ function MovieDetail() {
             <h1 className="text-4xl md:text-5xl font-bold mb-4">{movie.title}</h1>
 
             <div className="flex flex-wrap items-center gap-4 mb-6">
-              <span className="text-yellow-400 font-bold text-xl">
-                {movie.rating}/10
-              </span>
+              <span className="text-yellow-400 font-bold text-xl">{movie.rating}/10</span>
               <span className="text-gray-400">{movie.year}</span>
               <span className="text-gray-400">{movie.duration} min</span>
-              <span className="px-3 py-1 bg-primary rounded-full text-sm">
-                {movie.genre}
-              </span>
+              <span className="px-3 py-1 bg-primary rounded-full text-sm">{movie.genre}</span>
             </div>
 
-            <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-              {movie.description}
-            </p>
+            <p className="text-gray-300 text-lg mb-8 leading-relaxed">{movie.description}</p>
 
-            <Button size="lg" onClick={handleRent} className="mb-8">
-              Louer pour {movie.price}€
-            </Button>
+            {alreadyRented ? (
+              <p className="text-green-400 font-semibold mb-8">Déjà loué ✓</p>
+            ) : (
+              <div className="flex gap-4 mb-8">
+                <Button size="lg" onClick={handleRent}>
+                  Louer pour {movie.price}€
+                </Button>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={inCart}
+                  className={`px-6 py-3 border rounded-lg font-semibold transition-colors ${
+                    inCart
+                      ? 'border-gray-600 text-gray-600 cursor-not-allowed'
+                      : 'border-white hover:bg-white hover:text-black'
+                  }`}
+                >
+                  {inCart ? 'Dans le panier ✓' : 'Ajouter au panier'}
+                </button>
+              </div>
+            )}
 
             {/* Informations supplémentaires */}
             <div className="grid grid-cols-2 gap-4 text-sm">
