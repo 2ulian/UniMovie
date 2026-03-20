@@ -1,37 +1,27 @@
 import { useState, useEffect } from "react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import SearchBar from "../movies/SearchBar";
 import CartButton from "./CartButton";
+import { useAuth } from "../../context/AuthProvider";
 
 function Navbar({ movies = [], onSearch }) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
-
-    // Ajouter l'écouteur
     window.addEventListener('scroll', handleScroll);
-
-    // Vérifier si l'utilisateur est connecté
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-
-    // Nettoyage
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    window.location.href = '/';
+    logout();
+    setShowUserMenu(false);
+    navigate('/');
   };
 
-  // Fonction pour le style des liens actifs
   const getLinkClass = ({ isActive }) =>
     isActive
       ? 'text-primary font-bold'
@@ -39,8 +29,9 @@ function Navbar({ movies = [], onSearch }) {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-colors duration-300
-${isScrolled ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"}`}
+      className={`fixed top-0 w-full z-50 transition-colors duration-300 ${
+        isScrolled ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"
+      }`}
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
@@ -70,33 +61,66 @@ ${isScrolled ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"}`}
           {/* User Section */}
           <div className="flex items-center space-x-4">
             <SearchBar movies={movies} onSearch={onSearch} />
+
+            <button className="hover:text-gray-300 transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+
             <CartButton />
 
-            {/* User Avatar / Login */}
-            {user ? (
-              <div className="flex items-center space-x-3">
-                <div
-                  className="w-8 h-8 bg-primary rounded flex items-center justify-center cursor-pointer hover:bg-primary-dark transition-colors"
-                  title={user.name}
-                >
-                  <span className="text-sm font-bold">
-                    {user.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+            {isAuthenticated() ? (
+              <div className="relative">
                 <button
-                  onClick={handleLogout}
-                  className="text-gray-400 hover:text-white text-sm transition-colors"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2"
                 >
-                  Déconnexion
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-8 h-8 rounded cursor-pointer hover:ring-2 hover:ring-primary transition"
+                  />
+                  <span className="hidden md:block text-sm">{user.name}</span>
                 </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-black/95 backdrop-blur-lg border border-gray-800 rounded-lg shadow-xl py-2">
+                    <NavLink
+                      to="/my-rentals"
+                      className="block px-4 py-2 hover:bg-gray-800 transition"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Mes locations
+                    </NavLink>
+                    <NavLink
+                      to="/cart"
+                      className="block px-4 py-2 hover:bg-gray-800 transition"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      Mon panier
+                    </NavLink>
+                    <hr className="border-gray-800 my-2" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-800 transition text-red-400"
+                    >
+                      Déconnexion
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <NavLink
-                to="/login"
-                className="px-4 py-2 bg-primary hover:bg-primary-dark rounded font-medium transition-colors"
-              >
-                Connexion
-              </NavLink>
+              <Link to="/login">
+                <button className="px-4 py-2 bg-primary hover:bg-primary-dark rounded transition">
+                  Connexion
+                </button>
+              </Link>
             )}
           </div>
         </div>
