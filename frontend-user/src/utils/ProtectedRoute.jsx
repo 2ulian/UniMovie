@@ -1,11 +1,10 @@
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthProvider';
 
 function ProtectedRoute({ children }) {
-  // Vérifier si l'utilisateur est connecté via localStorage
-  const isAuthenticated = localStorage.getItem('user') !== null;
+  const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    // Rediriger vers la page de connexion
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
